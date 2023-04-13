@@ -1,86 +1,222 @@
-import pygame, os
+import pygame, os, random
 from model import Net_FlappyBird
+import torch as T # we only use : T.tensor
+
+from constants import *
 
 
 
 
-class Bird:
+class Bird(pygame.sprite.Sprite):
 
-    def __init__(self, enviroment):
-        
+    def __init__(self):
+        super().__init__()
+
+        # characteristics
         self.gravity = 0.25
         self.movement = 0
-        self.score = 0   
-        self.images = ImagesBird(enviroment.bird_color)
-        self.img = self.images.bird_mid
-        self.surface = self.img.get_rect(center = (120, 350))
-        self.model = Net_FlappyBird(input_size=3, lr=0.001)
+        self.score = 0
+        # self.brain = Net_FlappyBird(input_size=3, lr=0.001)
         self.t = 0
+        self.color = "yellow"
 
+        # graphics
+        self.image = IMG_birds[self.color][1]
+        self.rect = self.image.get_rect(center = (120, 350))
+        
     # 0 -> not jump / 1 -> jump
-    def play(self, state):
-        evaluation = self.model(state)
+    def move(self, state):
+        state = T.tensor(state, dtype=T.float)
+        evaluation = self.brain.forward(state)
         return 1 if evaluation > 0.5 else 0
+    
+    def update(self):
+        self.movement += self.gravity
+        self.rect.y += self.movement 
+        if self.movement < 0:
+            self.image = IMG_birds[self.color][0]
+        elif self.movement == 0:
+            self.image =IMG_birds[self.color][1]
+        else:
+            self.image = IMG_birds[self.color][2]
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+
+
+class Pipe(pygame.sprite.Sprite):
+
+    def __init__(self, height, type):  
+        """
+            type € {"up", "down"}
+        """
+        super().__init__()
+        if type == "up":
+            self.image = IMG_pipe_up
+            self.rect = self.image.get_rect()
+            self.rect.midtop = (450, height)
+        else:
+            self.image = IMG_pipe_down
+            self.rect = self.image.get_rect()
+            self.rect.midbottom = (450, height - 200)
+    
+    def update(self):
+        self.rect.x -= 2
+        if self.rect.x < -self.rect.width:
+            self.kill()
+
+
+class Floor:
+
+    def __init__(self):
+        self.image = IMG_floor
+        self.rect = self.image.get_rect()
+        self.reset()
+
+    def reset(self):
+        self.pos1 = [0, YLIM]
+        self.pos2 = [0 + 400, YLIM]
+
+    def update(self):
+        self.pos1[0] -= 2
+        self.pos2[0] -= 2
+        if self.pos2[0] < 0:
+            self.reset()
+
+    def draw(self, screen):
+        screen.blit(self.image, self.pos1)
+        screen.blit(self.image, self.pos2)
 
 
 
-class Images:
 
-    def load_image(self, name, size = False):
-        image = pygame.image.load(os.path.join("images", name))
-        if size != False: image = pygame.transform.scale(image, size)
-        return image
+class Game:
 
-
-class ImagesBird(Images):
-
-    def __init__(self, color):
+    def __init__(self):
         
-        size_bird = (45, 38)
-        bird_mid_red = self.load_image("redbird-midflap.png", size_bird)#.convert()
-        bird_down_red = self.load_image("redbird-downflap.png", size_bird)#.convert()
-        bird_up_red = self.load_image("redbird-upflap.png", size_bird)#.convert()
-        bird_mid_yellow = self.load_image("yellowbird-midflap.png", size_bird)#.convert()
-        bird_down_yellow = self.load_image("yellowbird-downflap.png", size_bird)#.convert()
-        bird_up_yellow = self.load_image("yellowbird-upflap.png", size_bird)#.convert()
-        bird_mid_blue = self.load_image("bluebird-midflap.png", size_bird)#.convert()
-        bird_down_blue = self.load_image("bluebird-downflap.png", size_bird)#.convert()
-        bird_up_blue = self.load_image("bluebird-upflap.png", size_bird)#.convert()
-        self.birds = dict()
-        self.birds["blue"] = [bird_up_blue, bird_mid_blue, bird_down_blue]
-        self.birds["red"] = [bird_up_red, bird_mid_red, bird_down_red]
-        self.birds["yellow"] = [bird_up_yellow, bird_mid_yellow, bird_down_yellow]
-        self.change_color(color)
+        pygame.init()
+
+        self.window = pygame.display.set_mode(SIZE_window)
+
+        self.floor = Floor()
         
-    def change_color(self, color):
-        self.bird_up = pygame.transform.rotate(self.birds[color][0], 5)
-        self.bird_mid = self.birds[color][1]
-        self.bird_down = pygame.transform.rotate(self.birds[color][2], -5)
+        self.pipe_heights = [250, 350, 450, 550]
+        self.pipes = pygame.sprite.Group()
+        self.reset_pipes()
+
+        self.bird = Bird()
+
+    def reset_pipes(self):
+        for pipe in self.pipes:
+            pipe.kill()
+        self.add_pipes()
+        self.actual_pipe = 0
+
+    def add_pipes(self):
+        random_height = random.choice(self.pipe_heights)
+        pipe1 = Pipe(random_height, type="up")
+        pipe2 = Pipe(random_height, type="down")
+        self.pipes.add(pipe1)
+        self.pipes.add(pipe2)
+        
+    def draw_score(self):
+        if self.bird.score - 1 < 10:
+            i = self.bird.score
+            if self.bird.score == 0: i = 1
+            self.window.blit(IMG_numbers[i-1], (200-15, 50))
+        elif self.bird.score - 1 < 100:
+            number = self.bird.score - 1
+            i1 = str(number)[0]
+            i2 = str(number)[1]
+            self.window.blit(IMG_numbers[int(i1)], (200-33, 50))
+            self.window.blit(IMG_numbers[int(i2)], (200+3, 50))
+        elif self.bird.score - 1 < 1000:
+            number = self.bird.score - 1
+            i1 = str(number)[0]
+            i2 = str(number)[1]
+            i3 = str(number)[2]
+            self.window.blit(IMG_numbers[int(i1)], (200-60, 50))
+            self.window.blit(IMG_numbers[int(i2)], (200-20, 50))
+            self.window.blit(IMG_numbers[int(i3)], (200+20, 50))
+
+    def update(self, die, game_active):
+        self.window.blit(IMG_backgroung, (0,0))
+        
+        if game_active:
+            # Bird
+            self.bird.update()
+            # Pipes
+            if not die: 
+                self.pipes.update()
+            self.pipes.draw(self.window)
+            # Floor
+            self.floor.update()
+        else:
+            self.window.blit(IMG_mesage, (50, 50))
+
+        self.bird.draw(self.window)
+        self.floor.draw(self.window)
+        
+        if die: 
+            self.window.blit(IMG_game_over, (50,270))
+        if game_active: 
+            self.draw_score()
+
+        pygame.display.update()
+
+    def play(self):
+        clock = pygame.time.Clock()
+        die = False
+        run = True
+        game_active = False
+        SPAWNPIPE = False
+        self.reset_pipes()
+
+        i = 0
+        while run:
+            i += 1
+    
+            clock.tick(120)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT: 
+                    run = False
+                    pygame.quit()
+                if not game_active:
+                    if event.type == pygame.KEYDOWN:
+                        if event.key  == pygame.K_SPACE:
+                            game_active = True
+                elif game_active and not die:
+                    if event.type == pygame.KEYDOWN:
+                        if event.key  == pygame.K_SPACE:
+                            self.bird.movement = 0
+                            if self.bird.rect.top > 0: self.bird.movement -= 5 
+                elif die:
+                    if event.type == pygame.KEYDOWN:
+                        if event.key  == pygame.K_SPACE:
+                            self.reset_pipes()
+                            self.bird.rect.center = (120, 350)
+                            game_active = False
+                            die = False
+                            self.bird.gravity = 0.25
+                            self.bird.score = 0
+                        
+            # Create new pipes
+            if SPAWNPIPE:
+                SPAWNPIPE = False
+                self.add_pipes()
+                self.bird.score += 1 
+            elif len(self.pipes) > 0 and self.pipes.sprites()[-1].rect.x < 450-300:
+                SPAWNPIPE = True
 
 
-class ImagesBG(Images):
+            # Collides 
+            if self.bird.rect.bottom > YLIM:
+                self.bird.movement = 0
+                self.bird.gravity = 0
+                die = True
+            if pygame.sprite.spritecollide(self.bird, self.pipes, dokill=False):
+                die = True
 
-    def __init__(self, str_bg, window_size):
-
-        # sizes
-        self.size_floor = (400, 110)
-        self.size_pipe = (70, 400)
-        self.size_number = (40, 50)
-        self.size_message = (300, 500)
-        self.size_game_over = (300, 100)
-
-        # background
-        self.bg_day = self.load_image("background-day.png", window_size)#.convert()
-        self.bg_night = self.load_image("background-night.png", window_size)#.convert()
-        self.bg_window = self.load_image("background-" + str_bg + ".png", window_size)#.convert()
-        self.floor = self.load_image("base.png", self.size_floor)#.convert()
-        self.pipe = self.load_image("pipe-green.png", self.size_pipe)#.convert()
-
-        # numbers
-        self.numbers = {}
-        for i in range(10): self.numbers[i] = self.load_image(str(i) + ".png", self.size_number)
-
-        # extra info
-        self.mesage = self.load_image("message.png", self.size_message)
-        self.game_over = self.load_image("gameover.png", self.size_game_over)
-
+            # Update frame
+            self.update(die, game_active)

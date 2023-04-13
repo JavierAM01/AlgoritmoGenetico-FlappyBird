@@ -1,11 +1,12 @@
-from game import ImagesBG, Bird
-from genetic_algorith import Genetic_Algorith
-import torch as T
+from game import Bird, Pipe
+
+from constants import *
 
 import pygame
 import random
 import time
 import os
+
 
 
 class Enviroment:
@@ -22,11 +23,9 @@ class Enviroment:
 
 		self.gen_algorith = Genetic_Algorith()
 
-		window_size = (400, 700)
-		self.window = pygame.display.set_mode(window_size)
+		self.window = pygame.display.set_mode(SIZE_window)
 		
-		type_bg = "day"       # day / night
-		self.img = ImagesBG(type_bg, window_size)
+		self.img = IMG_background
 		self.floor_rect = pygame.Rect((0, 620, 400, 110)) 
 		self.floor_x = 0
 
@@ -217,7 +216,7 @@ class Enviroment:
 			# Update frame
 			self.update(die, game_active)
 
-	def playAI_Gen(self, n_epochs, n_simulations):
+	def trainGen(self, n_epochs, n_simulations):
 		self.birds_gen = [Bird(self) for _ in range(n_simulations)]
 
 		for g in range(n_epochs):
@@ -259,8 +258,8 @@ class Enviroment:
 					# 	exit(0)
 					d1 = actual_pipe[0].center[0] - bird.surface.center[0]  # horizontal
 					d2 = (actual_pipe[0].bottom + actual_pipe[1].top) / 2 - bird.surface.center[1]
-					x = T.tensor([bird.movement, d1, d2], dtype=T.float)
-					move = bird.play(x)
+					x = [bird.movement, d1, d2] ######################################################################################
+					move = bird.move(x)
 					if move == 1:  
 						bird.movement = 0
 						if bird.surface.top > 0: bird.movement -= 5 
