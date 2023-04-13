@@ -43,9 +43,9 @@ IMG_bird_down_blue   = load_image("bluebird-downflap.png", size_bird)
 IMG_bird_up_blue     = load_image("bluebird-upflap.png", size_bird)
 
 IMG_birds = dict()
-IMG_birds["blue"]   = [IMG_bird_up_blue,   IMG_bird_mid_blue,   IMG_bird_down_blue  ]
-IMG_birds["red"]    = [IMG_bird_up_red,    IMG_bird_mid_red,    IMG_bird_down_red   ]
-IMG_birds["yellow"] = [IMG_bird_up_yellow, IMG_bird_mid_yellow, IMG_bird_down_yellow]
+IMG_birds["blue"]   = [pygame.transform.rotate(IMG_bird_up_blue, 5),   IMG_bird_mid_blue,   pygame.transform.rotate(IMG_bird_down_blue, -5)  ]
+IMG_birds["red"]    = [pygame.transform.rotate(IMG_bird_up_red, 5),    IMG_bird_mid_red,    pygame.transform.rotate(IMG_bird_down_red, -5)   ]
+IMG_birds["yellow"] = [pygame.transform.rotate(IMG_bird_up_yellow, 5), IMG_bird_mid_yellow, pygame.transform.rotate(IMG_bird_down_yellow, -5)]
 
 
 # extra info

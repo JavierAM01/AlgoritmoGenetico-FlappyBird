@@ -1,6 +1,4 @@
-import pygame, os, random
-from model import Net_FlappyBird
-import torch as T # we only use : T.tensor
+import pygame, random
 
 from constants import *
 
@@ -23,12 +21,6 @@ class Bird(pygame.sprite.Sprite):
         # graphics
         self.image = IMG_birds[self.color][1]
         self.rect = self.image.get_rect(center = (120, 350))
-        
-    # 0 -> not jump / 1 -> jump
-    def move(self, state):
-        state = T.tensor(state, dtype=T.float)
-        evaluation = self.brain.forward(state)
-        return 1 if evaluation > 0.5 else 0
     
     def update(self):
         self.movement += self.gravity
@@ -208,7 +200,6 @@ class Game:
                 self.bird.score += 1 
             elif len(self.pipes) > 0 and self.pipes.sprites()[-1].rect.x < 450-300:
                 SPAWNPIPE = True
-
 
             # Collides 
             if self.bird.rect.bottom > YLIM:

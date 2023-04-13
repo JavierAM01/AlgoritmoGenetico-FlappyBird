@@ -1,0 +1,42 @@
+import pygame, random
+import torch as T # we only use : T.tensor
+from model import Net_FlappyBird
+
+from constants import *
+
+
+class Bird_AI(pygame.sprite.Sprite):
+
+    def __init__(self):
+        super().__init__()
+
+        # characteristics
+        self.gravity = 0.25
+        self.movement = 0
+        self.score = 0
+        self.brain = Net_FlappyBird(input_size=3, lr=0.001)
+        self.t = 0
+        self.color = "yellow"
+
+        # graphics
+        self.image = IMG_birds[self.color][1]
+        self.rect = self.image.get_rect(center = (120, 350))
+    
+    # 0 -> not jump / 1 -> jump
+    def move(self, state):
+        state = T.tensor(state, dtype=T.float)
+        evaluation = self.brain.forward(state)
+        return 1 if evaluation > 0.5 else 0
+    
+    def update(self):
+        self.movement += self.gravity
+        self.rect.y += self.movement 
+        if self.movement < 0:
+            self.image = IMG_birds[self.color][0]
+        elif self.movement == 0:
+            self.image =IMG_birds[self.color][1]
+        else:
+            self.image = IMG_birds[self.color][2]
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
