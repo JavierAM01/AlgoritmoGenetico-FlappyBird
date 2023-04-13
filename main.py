@@ -14,7 +14,7 @@ def main():
         break
     """
     
-    enviroment.play()#AI_Gen(n_epochs=30, n_simulations=30)
+    enviroment.playAI_Gen(n_epochs=30, n_simulations=20)
 
 
 if __name__ == '__main__':

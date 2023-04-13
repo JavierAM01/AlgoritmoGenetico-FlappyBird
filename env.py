@@ -36,7 +36,7 @@ class Enviroment:
 		self.reset_pipes()
 
 	def reset_pipes(self):
-		self.pipe_list = []#[self.create_pipe(self.img.pipe)]
+		self.pipe_list = [self.create_pipe(self.img.pipe)]
 		self.actual_pipe = 0
 
 	def create_pipe(self, img_pipe):
@@ -157,16 +157,13 @@ class Enviroment:
 		die = False
 		run = True
 		game_active = False
-		SPAWNPIPE = True # pygame.USEREVENT
+		SPAWNPIPE = False # pygame.USEREVENT
 		# pygame.time.set_timer(SPAWNPIPE, 1200)
 		self.reset_pipes()
 
 		i = 0
 		while run:
 			i += 1
-
-			if len(self.pipe_list) == 0:
-				SPAWNPIPE = True
 	
 			clock.tick(120)
 
@@ -231,7 +228,7 @@ class Enviroment:
 			for bird in self.birds_gen:
 				b += 1
 				self.bird = bird
-				self.birds_sample = [bird]
+				self.birds_sample = [bird for _ in range(10)]
 				bird.t = time.time()
 				self.playAI()
 				print("Bird:", b, "(Score:", self.gen_algorith.scores[-1], ")")
@@ -245,8 +242,7 @@ class Enviroment:
 		die = False
 		run = True
 		game_active = True
-		SPAWNPIPE = pygame.USEREVENT
-		pygame.time.set_timer(SPAWNPIPE, 1200)
+		SPAWNPIPE = False
 		self.reset_pipes()
 
 		while run:
@@ -284,6 +280,15 @@ class Enviroment:
 					die = False
 					self.img.bg_window = self.img.bg_day
 					return 
+
+			# Create new pipes
+			if SPAWNPIPE:
+				SPAWNPIPE = False
+				new_pair_pipe = self.create_pipe(self.img.pipe)
+				self.pipe_list.append(new_pair_pipe)
+				self.bird.score += 1 
+			elif len(self.pipe_list) > 0 and self.pipe_list[-1][0].x < 450-300:
+				SPAWNPIPE = True
 
 			# Collides 
 			e = 0  # number of die birds in this frame

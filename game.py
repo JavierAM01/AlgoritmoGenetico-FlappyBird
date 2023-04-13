@@ -27,7 +27,7 @@ class Bird:
 class Images:
 
     def load_image(self, name, size = False):
-        image = pygame.image.load(os.path.join("../images", name))
+        image = pygame.image.load(os.path.join("images", name))
         if size != False: image = pygame.transform.scale(image, size)
         return image
 
