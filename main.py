@@ -3,7 +3,7 @@ from game_AI import Game_AI
 
 
 def main():
-    game = Game_AI()
+    game = Game()
     game.play()
 
 

@@ -33,7 +33,7 @@ class Bird_AI(Bird):
             self.movement = 0
             if self.rect.top > 0: 
                 self.movement -= 5
-    
+
 
 class Game_AI(Game):
 

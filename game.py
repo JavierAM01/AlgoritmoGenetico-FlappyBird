@@ -11,16 +11,14 @@ class Bird(pygame.sprite.Sprite):
         super().__init__()
 
         # characteristics
-        self.gravity = 0.25
-        self.movement = 0
-        self.score = 0
-        # self.brain = Net_FlappyBird(input_size=3, lr=0.001)
         self.t = 0
         self.color = "yellow"
 
         # graphics
         self.image = IMG_birds[self.color][1]
-        self.rect = self.image.get_rect(center = (120, 350))
+        self.rect = self.image.get_rect()
+        
+        self.reset()
 
     def move(self, event):
         if event.type == pygame.KEYDOWN:
@@ -38,6 +36,12 @@ class Bird(pygame.sprite.Sprite):
             self.image =IMG_birds[self.color][1]
         else:
             self.image = IMG_birds[self.color][2]
+
+    def reset(self):
+        self.gravity = 0.25
+        self.movement = 0
+        self.score = 0
+        self.rect.center = (120, 350)
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -121,21 +125,20 @@ class Game:
         self.pipes.add(pipe2)
         
     def draw_score(self):
-        if self.bird.score - 1 < 10:
-            i = self.bird.score
-            if self.bird.score == 0: i = 1
-            self.window.blit(IMG_numbers[i-1], (200-15, 50))
-        elif self.bird.score - 1 < 100:
-            number = self.bird.score - 1
-            i1 = str(number)[0]
-            i2 = str(number)[1]
+
+        n = self.bird.score
+        
+        if n < 10:
+            self.window.blit(IMG_numbers[n], (200-15, 50))
+        elif n < 100:
+            i1 = str(n)[0]
+            i2 = str(n)[1]
             self.window.blit(IMG_numbers[int(i1)], (200-33, 50))
             self.window.blit(IMG_numbers[int(i2)], (200+3, 50))
-        elif self.bird.score - 1 < 1000:
-            number = self.bird.score - 1
-            i1 = str(number)[0]
-            i2 = str(number)[1]
-            i3 = str(number)[2]
+        elif n < 1000:
+            i1 = str(n)[0]
+            i2 = str(n)[1]
+            i3 = str(n)[2]
             self.window.blit(IMG_numbers[int(i1)], (200-60, 50))
             self.window.blit(IMG_numbers[int(i2)], (200-20, 50))
             self.window.blit(IMG_numbers[int(i3)], (200+20, 50))
@@ -199,17 +202,14 @@ class Game:
                     if event.type == pygame.KEYDOWN:
                         if event.key  == pygame.K_SPACE:
                             self.reset_pipes()
-                            self.bird.rect.center = (120, 350)
+                            self.bird.reset()
                             game_active = False
                             die = False
-                            self.bird.gravity = 0.25
-                            self.bird.score = 0
                         
             # Create new pipes
             if SPAWNPIPE:
                 SPAWNPIPE = False
                 self.add_pipes()
-                self.bird.score += 1 
             elif len(self.pipes) > 0 and self.pipes.sprites()[-1].rect.x < 450-300:
                 SPAWNPIPE = True
 
@@ -217,6 +217,7 @@ class Game:
             if self.actual_pipe_bottom.rect.right < self.bird.rect.centerx:
                 self.actual_pipe_top = self.pipes.sprites()[-2]
                 self.actual_pipe_bottom = self.pipes.sprites()[-1]
+                self.bird.score += 1 
 
             # Collides 
             if self.bird.rect.bottom > YLIM:
