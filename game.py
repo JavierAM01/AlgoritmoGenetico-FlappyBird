@@ -97,17 +97,13 @@ class Game:
 
     def __init__(self):
         
-        pygame.init()
-
-        self.window = pygame.display.set_mode(SIZE_window)
-
         self.floor = Floor()
         
         self.pipe_heights = [250, 350, 450, 550]
         self.pipes = pygame.sprite.Group()
         self.reset_pipes()
 
-        self.bird = Bird()
+        self.birds = pygame.sprite.Group()
 
     def reset_pipes(self):
         for pipe in self.pipes:
@@ -124,9 +120,9 @@ class Game:
         self.pipes.add(pipe1)
         self.pipes.add(pipe2)
         
-    def draw_score(self):
+    def draw_score(self, score):
 
-        n = self.bird.score
+        n = score
         
         if n < 10:
             self.window.blit(IMG_numbers[n], (200-15, 50))
@@ -143,12 +139,12 @@ class Game:
             self.window.blit(IMG_numbers[int(i2)], (200-20, 50))
             self.window.blit(IMG_numbers[int(i3)], (200+20, 50))
 
-    def update(self, die, game_active):
+    def update(self, score, die, game_active):
         self.window.blit(IMG_backgroung, (0,0))
         
         if game_active:
             # Bird
-            self.bird.update()
+            self.birds.update()
             # Pipes
             if not die: 
                 self.pipes.update()
@@ -158,16 +154,17 @@ class Game:
         else:
             self.window.blit(IMG_mesage, (50, 50))
 
-        self.bird.draw(self.window)
+        self.birds.draw(self.window)
         self.floor.draw(self.window)
 
-        pygame.draw.line(self.window,(0,0,0), self.bird.rect.center, (self.actual_pipe_top.rect.centerx, self.actual_pipe_top.rect.bottom))
-        pygame.draw.line(self.window,(0,0,0), self.bird.rect.center, (self.actual_pipe_bottom.rect.centerx, self.actual_pipe_bottom.rect.top))
+        for bird in self.birds:
+            pygame.draw.line(self.window,(0,0,0), bird.rect.center, (self.actual_pipe_top.rect.centerx, self.actual_pipe_top.rect.bottom))
+            pygame.draw.line(self.window,(0,0,0), bird.rect.center, (self.actual_pipe_bottom.rect.centerx, self.actual_pipe_bottom.rect.top))
         
         if die: 
             self.window.blit(IMG_game_over, (50,270))
         if game_active: 
-            self.draw_score()
+            self.draw_score(score)
 
         pygame.display.update()
 
@@ -175,6 +172,15 @@ class Game:
         self.bird.move(event)
 
     def play(self):
+
+        pygame.init()
+        self.window = pygame.display.set_mode(SIZE_window)
+
+        bird = Bird()
+        self.birds.add(bird)
+
+        score = 0
+
         clock = pygame.time.Clock()
         die = False
         run = True
@@ -202,7 +208,7 @@ class Game:
                     if event.type == pygame.KEYDOWN:
                         if event.key  == pygame.K_SPACE:
                             self.reset_pipes()
-                            self.bird.reset()
+                            bird.reset()
                             game_active = False
                             die = False
                         
@@ -214,18 +220,22 @@ class Game:
                 SPAWNPIPE = True
 
             # update actual pipe
-            if self.actual_pipe_bottom.rect.right < self.bird.rect.centerx:
+            if self.actual_pipe_bottom.rect.right < bird.rect.centerx:
                 self.actual_pipe_top = self.pipes.sprites()[-2]
                 self.actual_pipe_bottom = self.pipes.sprites()[-1]
-                self.bird.score += 1 
+                bird.score += 1 
+                score += 1
 
             # Collides 
-            if self.bird.rect.bottom > YLIM:
-                self.bird.movement = 0
-                self.bird.gravity = 0
+            if bird.rect.bottom > YLIM:
+                bird.movement = 0
+                bird.gravity = 0
                 die = True
-            if pygame.sprite.spritecollide(self.bird, self.pipes, dokill=False):
+            if pygame.sprite.spritecollide(bird, self.pipes, dokill=False):
                 die = True
 
             # Update frame
-            self.update(die, game_active)
+            self.update(score, die, game_active)
+
+        pygame.quit()
+        bird.kill()

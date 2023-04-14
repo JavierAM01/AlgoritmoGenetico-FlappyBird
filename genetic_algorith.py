@@ -6,7 +6,7 @@ import torch as T
 from model import Net_FlappyBird as Net
 
 
-class Genetic_Algorith:
+class Genetic_Model:
 
     def __init__(self):
         self.parameters      = []
@@ -14,9 +14,16 @@ class Genetic_Algorith:
         self.best_parameters = []
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
 
+    def get_best_parameters(self):
+        bs, bp = -1, None
+        for s, p in self.best_parameters:
+            if s > bs:
+                bp = p
+        return bp
+
     def save_results(self, bird):
-        weights = bird.model.state_dict()
-        score = int(time.time() - bird.t)
+        weights = bird.brain.state_dict()
+        score = bird.score
         self.parameters.append(weights)
         self.scores.append(score)
 
@@ -58,10 +65,10 @@ class Genetic_Algorith:
         # create a 10% (rest) random gen
 
         for _ in range(N - len(next_gen)):
-            net = Net(input_size=3, lr=0.001)
+            net = Net(input_size=5)
             next_gen.append(net.state_dict())
         
-        # maintain only the best 20% models
+        # save the best 20% models
         
         self.best_parameters = sorted(self.best_parameters, key = lambda x : x[0], reverse=True) # sort by scores
         T.save(self.best_parameters[0][1], f'models/best_{self.best_parameters[0][0]}.pkl')
@@ -78,9 +85,9 @@ class Genetic_Algorith:
         
         option = np.random.randint(2)
         
-        net = Net(input_size=3, lr=0.001)
+        net = Net(input_size=5)
         params = net.state_dict()
-        net2 = Net(input_size=3, lr=0.001)
+        net2 = Net(input_size=5)
         params2 = net2.state_dict()
 
         # chose diferent parts of both params: p1 & p2

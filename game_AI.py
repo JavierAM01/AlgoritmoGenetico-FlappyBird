@@ -1,6 +1,8 @@
-import pygame, random
+import pygame, random, os
 import torch as T # we only use : T.tensor
+
 from model import Net_FlappyBird
+from genetic_algorith import Genetic_Model
 
 from constants import *
 from game import Game, Bird
@@ -46,38 +48,58 @@ class Game_AI(Game):
 
     def __init__(self):
         super().__init__()
-        self.bird = Bird_AI()
-
-    def move(self, event):
-        self.bird.move(self.actual_pipe_top, self.actual_pipe_bottom)
 
     def train(self, n_generations, n_birds):
-        for g in n_generations:
-            birds_gen = pygame.sprite.Group()
-            for _ in range(n_birds):
+
+        gen_model = Genetic_Model()
+        
+        next_gen = None
+        
+        print("SCORES:")
+        for g in range(n_generations):
+
+            for i in range(n_birds):
                 bird = Bird_AI()
-                birds_gen.add(bird)
-            scores = self.play_generation(birds_gen)
-            print(f"Gen [{g+1}] Scores : {scores}")
+                if next_gen != None:
+                    bird.brain.load_state_dict(next_gen[i])
+                self.birds.add(bird)
+            
+            self.play_generation(gen_model)
+            
+            print(f"\nGen [{g+1}]")
+            for i, s in enumerate(gen_model.scores):
+                print(f"\t Bird {i}: {s}")
+
+            # first we play 5 generations randomly (to ensure that we search enough) 
+            # and then we begin the genetic algorithm with the best results of the past
+            if g > 5:
+                next_gen = gen_model.create_next_gen()
+
+            gen_model.reset()
+
+        n = len(os.listdir("models"))
+        T.save(gen_model.get_best_parameters(), f"models/best_brain_{n}.pkl")
 
 
 
-    def play_generation(self, birds_gen):
+    def play_generation(self, gen_model):
 
-        scores = []
+        pygame.init()
+        self.window = pygame.display.set_mode(SIZE_window)
+
+        score = 0
 
         clock = pygame.time.Clock()
-        run = True
         SPAWNPIPE = False
         self.reset_pipes()
 
         i = 0
-        while run:
+        while len(self.birds) > 0:
             i += 1
     
             clock.tick(120)
             
-            for bird in birds_gen:
+            for bird in self.birds:
                 bird.move(self.actual_pipe_top, self.actual_pipe_bottom)
                         
             # Create new pipes
@@ -88,22 +110,23 @@ class Game_AI(Game):
                 SPAWNPIPE = True
 
             # update actual pipe
-            if self.actual_pipe_bottom.rect.right < self.bird.rect.centerx:
+            if self.actual_pipe_bottom.rect.right < 120: # bird centerx
                 self.actual_pipe_top = self.pipes.sprites()[-2]
                 self.actual_pipe_bottom = self.pipes.sprites()[-1]
-                self.bird.score += 1 
+                for bird in self.birds: bird.score += 1
+                score += 1 
 
             # Collides 
-            for bird in birds_gen:
+            for bird in self.birds:
                 if bird.rect.bottom > YLIM:
-                    scores.append(bird.score)
+                    gen_model.save_results(bird)
                     bird.kill()
-            for bird, _ in pygame.sprite.groupcollide(birds_gen, self.pipes, False, False).items():
-                scores.append(bird.score)
+            for bird, _ in pygame.sprite.groupcollide(self.birds, self.pipes, False, False).items():
+                gen_model.save_results(bird)
                 bird.kill()
                 
 
             # Update frame
-            self.update(False, True) # die , game_active
+            self.update(score, False, True) # die , game_active
 
-        return scores
+        pygame.quit()
