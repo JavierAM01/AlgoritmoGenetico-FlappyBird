@@ -43,7 +43,7 @@ class Pipe(pygame.sprite.Sprite):
             type € {"up", "down"}
         """
         super().__init__()
-        if type == "up":
+        if type == "down":
             self.image = IMG_pipe_up
             self.rect = self.image.get_rect()
             self.rect.midtop = (450, height)
@@ -102,12 +102,13 @@ class Game:
         for pipe in self.pipes:
             pipe.kill()
         self.add_pipes()
-        self.actual_pipe = 0
 
     def add_pipes(self):
         random_height = random.choice(self.pipe_heights)
         pipe1 = Pipe(random_height, type="up")
         pipe2 = Pipe(random_height, type="down")
+        self.actual_pipe_top = pipe1
+        self.actual_pipe_bottom = pipe2
         self.pipes.add(pipe1)
         self.pipes.add(pipe2)
         
@@ -148,6 +149,9 @@ class Game:
 
         self.bird.draw(self.window)
         self.floor.draw(self.window)
+
+        pygame.draw.line(self.window,(0,0,0), self.bird.rect.center, (self.actual_pipe_top.rect.centerx, self.actual_pipe_top.rect.bottom))
+        pygame.draw.line(self.window,(0,0,0), self.bird.rect.center, (self.actual_pipe_bottom.rect.centerx, self.actual_pipe_bottom.rect.top))
         
         if die: 
             self.window.blit(IMG_game_over, (50,270))
