@@ -45,7 +45,7 @@ class Game_AI(Game):
     def __init__(self):
         super().__init__()
 
-    def train(self, n_generations, n_birds):
+    def train(self, n_generations, n_birds, limit_score=50, draw=True):
 
         gen_model = Genetic_Model()
         
@@ -60,7 +60,7 @@ class Game_AI(Game):
                     bird.brain.load_state_dict(next_gen[i])
                 self.birds.add(bird)
             
-            self.play_generation(gen_model)
+            self.play_generation(gen_model, limit_score, draw)
             
             print(f"\nGen [{g+1}]")
             for i, s in enumerate(gen_model.scores):
@@ -68,28 +68,29 @@ class Game_AI(Game):
 
             # first we play 10 generations randomly (to ensure that we search enough) 
             # and then we begin the genetic algorithm with the best results of the past
-            if g > n_generations // 2:
+            if g > min(10, n_generations // 2):
                 next_gen = gen_model.create_next_gen()
 
             gen_model.reset()
 
-    def play_generation(self, gen_model):
+    def play_generation(self, gen_model, limit_score=50, draw=True):
 
-        pygame.init()
-        self.window = pygame.display.set_mode(SIZE_window)
-
-        score = 0
-
+        if draw: 
+            pygame.init()
+            self.window = pygame.display.set_mode(SIZE_window)
+        
         clock = pygame.time.Clock()
         SPAWNPIPE = False
         self.reset_pipes()
+
+        score = 0
 
         i = 0
         while len(self.birds) > 0:
             i += 1
 
             # avoid having (almost perfect) birds who never dies
-            if score == 50:
+            if score == limit_score:
                 for bird in self.birds:
                     gen_model.save_results(bird)
                     bird.kill()
@@ -124,9 +125,9 @@ class Game_AI(Game):
                 
 
             # Update frame
-            self.update(score, False, True) # die , game_active
+            self.update(score, False, True, draw) # die , game_active
 
-        pygame.quit()
+        if draw: pygame.quit()
 
     def play_AI(self, particular_bird=None):
 
@@ -206,3 +207,33 @@ class Game_AI(Game):
         bird.kill()
         pygame.quit()
         bird.kill()
+
+    def update(self, score, die, game_active, draw=True):
+        if draw: self.window.blit(IMG_backgroung, (0,0))
+        
+        if game_active:
+            # Bird
+            self.birds.update()
+            # Pipes
+            if not die: 
+                self.pipes.update()
+            if draw: self.pipes.draw(self.window)
+            # Floor
+            self.floor.update()
+        else:
+            if draw: self.window.blit(IMG_mesage, (50, 50))
+
+        if draw: 
+            self.birds.draw(self.window)
+            self.floor.draw(self.window)
+
+            for bird in self.birds:
+                pygame.draw.line(self.window,(0,0,0), bird.rect.center, (self.actual_pipe_top.rect.centerx, self.actual_pipe_top.rect.bottom))
+                pygame.draw.line(self.window,(0,0,0), bird.rect.center, (self.actual_pipe_bottom.rect.centerx, self.actual_pipe_bottom.rect.top))
+        
+            if die: 
+                self.window.blit(IMG_game_over, (50,270))
+            if game_active: 
+                self.draw_score(score)
+
+            pygame.display.update()

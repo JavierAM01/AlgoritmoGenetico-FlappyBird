@@ -14,10 +14,10 @@ def main():
 
         if "-bm" in sys.argv:
             bird = Bird_AI()
-            bird.load_model("models/best_50.pkl")
+            bird.load_model("models/best_100.pkl")
             game.play_AI(bird)
         elif "-train" in sys.argv:
-            game.train(n_generations=20, n_birds=20)
+            game.train(n_generations=30, n_birds=30, limit_score=100, draw=False)
         else:
             game.play_AI()
 
