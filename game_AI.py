@@ -36,10 +36,6 @@ class Bird_AI(Bird):
             if self.rect.top > 0: 
                 self.movement -= 5
 
-    # def kill(self):
-    #     super().kill()
-    #     return self.score
-
     def load_model(self, filename):
         self.brain.load_state_dict(T.load(filename))
 
@@ -70,17 +66,12 @@ class Game_AI(Game):
             for i, s in enumerate(gen_model.scores):
                 print(f"\t Bird {i}: {s}")
 
-            # first we play 5 generations randomly (to ensure that we search enough) 
+            # first we play 10 generations randomly (to ensure that we search enough) 
             # and then we begin the genetic algorithm with the best results of the past
-            if g > 5:
+            if g > n_generations // 2:
                 next_gen = gen_model.create_next_gen()
 
             gen_model.reset()
-
-        n = len(os.listdir("models"))
-        T.save(gen_model.get_best_parameters(), f"models/best_brain_{n}.pkl")
-
-
 
     def play_generation(self, gen_model):
 
@@ -96,6 +87,12 @@ class Game_AI(Game):
         i = 0
         while len(self.birds) > 0:
             i += 1
+
+            # avoid having (almost perfect) birds who never dies
+            if score == 50:
+                for bird in self.birds:
+                    gen_model.save_results(bird)
+                    bird.kill()
     
             clock.tick(120)
             
@@ -130,3 +127,82 @@ class Game_AI(Game):
             self.update(score, False, True) # die , game_active
 
         pygame.quit()
+
+    def play_AI(self, particular_bird=None):
+
+        bird = Bird() if particular_bird == None else particular_bird
+        self.birds.add(bird)
+
+        pygame.init()
+        self.window = pygame.display.set_mode(SIZE_window)
+
+        score = 0
+
+        clock = pygame.time.Clock()
+        die = False
+        run = True
+        game_active = False
+        SPAWNPIPE = False
+        self.reset_pipes()
+
+        i = 0
+        while run:
+            i += 1
+    
+            clock.tick(120)
+
+            for event in pygame.event.get():
+                
+                # quit display
+                if event.type == pygame.QUIT: 
+                    run = False
+                    pygame.quit()
+
+                if not game_active:
+                    # screen : before start the game -> check SPACE to begin
+                    if event.type == pygame.KEYDOWN:
+                        if event.key  == pygame.K_SPACE:
+                            game_active = True
+
+                elif die:
+                    # bird on the floor (end game) -> check SPACE to reset
+                    if event.type == pygame.KEYDOWN:
+                        if event.key  == pygame.K_SPACE:
+                            self.reset_pipes()
+                            bird.reset()
+                            game_active = False
+                            die = False
+                            score = 0
+
+            # Move bird
+            if not die and game_active:
+                bird.move(self.actual_pipe_top, self.actual_pipe_bottom)
+                        
+            # Create new pipes
+            if SPAWNPIPE:
+                SPAWNPIPE = False
+                self.add_pipes()
+            elif len(self.pipes) > 0 and self.pipes.sprites()[-1].rect.x < 450-300:
+                SPAWNPIPE = True
+
+            # update actual pipe
+            if self.actual_pipe_bottom.rect.right < bird.rect.centerx:
+                self.actual_pipe_top = self.pipes.sprites()[-2]
+                self.actual_pipe_bottom = self.pipes.sprites()[-1]
+                bird.score += 1 
+                score += 1
+
+            # Collides 
+            if bird.rect.bottom > YLIM:
+                bird.movement = 0
+                bird.gravity = 0
+                die = True
+            if pygame.sprite.spritecollide(bird, self.pipes, dokill=False):
+                die = True
+
+            # Update frame
+            self.update(score, die, game_active)
+
+        bird.kill()
+        pygame.quit()
+        bird.kill()

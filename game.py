@@ -19,13 +19,6 @@ class Bird(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         
         self.reset()
-
-    def move(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key  == pygame.K_SPACE:
-                self.movement = 0
-                if self.rect.top > 0: 
-                    self.movement -= 5 
     
     def update(self):
         self.movement += self.gravity
@@ -168,16 +161,13 @@ class Game:
 
         pygame.display.update()
 
-    def move(self, event):
-        self.bird.move(event)
+    def play(self, particular_bird=None):
 
-    def play(self):
+        bird = Bird() if particular_bird == None else particular_bird
+        self.birds.add(bird)
 
         pygame.init()
         self.window = pygame.display.set_mode(SIZE_window)
-
-        bird = Bird()
-        self.birds.add(bird)
 
         score = 0
 
@@ -195,22 +185,34 @@ class Game:
             clock.tick(120)
 
             for event in pygame.event.get():
+                
+                # quit display
                 if event.type == pygame.QUIT: 
                     run = False
                     pygame.quit()
+
                 if not game_active:
+                    # screen : before start the game -> check SPACE to begin
                     if event.type == pygame.KEYDOWN:
                         if event.key  == pygame.K_SPACE:
                             game_active = True
+                
                 elif game_active and not die:
-                    self.move(event)
+                    # move bird
+                    if event.type == pygame.KEYDOWN:
+                        if event.key  == pygame.K_SPACE:
+                            bird.movement = 0
+                            if bird.rect.top > 0: 
+                                bird.movement -= 5 
                 elif die:
+                    # bird on the floor (end game) -> check SPACE to reset
                     if event.type == pygame.KEYDOWN:
                         if event.key  == pygame.K_SPACE:
                             self.reset_pipes()
                             bird.reset()
                             game_active = False
                             die = False
+                            score = 0
                         
             # Create new pipes
             if SPAWNPIPE:
@@ -237,5 +239,6 @@ class Game:
             # Update frame
             self.update(score, die, game_active)
 
+        bird.kill()
         pygame.quit()
         bird.kill()
