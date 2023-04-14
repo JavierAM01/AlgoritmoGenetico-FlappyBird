@@ -21,6 +21,13 @@ class Bird(pygame.sprite.Sprite):
         # graphics
         self.image = IMG_birds[self.color][1]
         self.rect = self.image.get_rect(center = (120, 350))
+
+    def move(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key  == pygame.K_SPACE:
+                self.movement = 0
+                if self.rect.top > 0: 
+                    self.movement -= 5 
     
     def update(self):
         self.movement += self.gravity
@@ -107,8 +114,9 @@ class Game:
         random_height = random.choice(self.pipe_heights)
         pipe1 = Pipe(random_height, type="up")
         pipe2 = Pipe(random_height, type="down")
-        self.actual_pipe_top = pipe1
-        self.actual_pipe_bottom = pipe2
+        if len(self.pipes) == 0:
+            self.actual_pipe_top = pipe1
+            self.actual_pipe_bottom = pipe2
         self.pipes.add(pipe1)
         self.pipes.add(pipe2)
         
@@ -160,6 +168,9 @@ class Game:
 
         pygame.display.update()
 
+    def move(self, event):
+        self.bird.move(event)
+
     def play(self):
         clock = pygame.time.Clock()
         die = False
@@ -183,10 +194,7 @@ class Game:
                         if event.key  == pygame.K_SPACE:
                             game_active = True
                 elif game_active and not die:
-                    if event.type == pygame.KEYDOWN:
-                        if event.key  == pygame.K_SPACE:
-                            self.bird.movement = 0
-                            if self.bird.rect.top > 0: self.bird.movement -= 5 
+                    self.move(event)
                 elif die:
                     if event.type == pygame.KEYDOWN:
                         if event.key  == pygame.K_SPACE:
@@ -204,6 +212,11 @@ class Game:
                 self.bird.score += 1 
             elif len(self.pipes) > 0 and self.pipes.sprites()[-1].rect.x < 450-300:
                 SPAWNPIPE = True
+
+            # update actual pipe
+            if self.actual_pipe_bottom.rect.right < self.bird.rect.centerx:
+                self.actual_pipe_top = self.pipes.sprites()[-2]
+                self.actual_pipe_bottom = self.pipes.sprites()[-1]
 
             # Collides 
             if self.bird.rect.bottom > YLIM:
