@@ -1,8 +1,9 @@
 from game import Game
+from game_AI import Game_AI
 
 
 def main():
-    game = Game()
+    game = Game_AI()
     game.play()
 
 
