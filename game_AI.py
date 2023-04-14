@@ -34,6 +34,13 @@ class Bird_AI(Bird):
             if self.rect.top > 0: 
                 self.movement -= 5
 
+    # def kill(self):
+    #     super().kill()
+    #     return self.score
+
+    def load_model(self, filename):
+        self.brain.load_state_dict(T.load(filename))
+
 
 class Game_AI(Game):
 
@@ -43,3 +50,60 @@ class Game_AI(Game):
 
     def move(self, event):
         self.bird.move(self.actual_pipe_top, self.actual_pipe_bottom)
+
+    def train(self, n_generations, n_birds):
+        for g in n_generations:
+            birds_gen = pygame.sprite.Group()
+            for _ in range(n_birds):
+                bird = Bird_AI()
+                birds_gen.add(bird)
+            scores = self.play_generation(birds_gen)
+            print(f"Gen [{g+1}] Scores : {scores}")
+
+
+
+    def play_generation(self, birds_gen):
+
+        scores = []
+
+        clock = pygame.time.Clock()
+        run = True
+        SPAWNPIPE = False
+        self.reset_pipes()
+
+        i = 0
+        while run:
+            i += 1
+    
+            clock.tick(120)
+            
+            for bird in birds_gen:
+                bird.move(self.actual_pipe_top, self.actual_pipe_bottom)
+                        
+            # Create new pipes
+            if SPAWNPIPE:
+                SPAWNPIPE = False
+                self.add_pipes()
+            elif len(self.pipes) > 0 and self.pipes.sprites()[-1].rect.x < 450-300:
+                SPAWNPIPE = True
+
+            # update actual pipe
+            if self.actual_pipe_bottom.rect.right < self.bird.rect.centerx:
+                self.actual_pipe_top = self.pipes.sprites()[-2]
+                self.actual_pipe_bottom = self.pipes.sprites()[-1]
+                self.bird.score += 1 
+
+            # Collides 
+            for bird in birds_gen:
+                if bird.rect.bottom > YLIM:
+                    scores.append(bird.score)
+                    bird.kill()
+            for bird, _ in pygame.sprite.groupcollide(birds_gen, self.pipes, False, False).items():
+                scores.append(bird.score)
+                bird.kill()
+                
+
+            # Update frame
+            self.update(False, True) # die , game_active
+
+        return scores
