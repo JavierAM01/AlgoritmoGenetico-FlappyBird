@@ -141,17 +141,6 @@ class Genetic_Model:
         elif option == 1:
             change2(params)
             change2(params2)
-        
-        # # change a little the actual param: p1
-        # else: 
-        #     for key in self.params:
-        #         # crate a matrix of 1.01 or 0.99 (randomly) and multiply to the actual values
-        #         c1 = [1 + (0.01 * (-1)**np.random.randint(2)) for _ in range(np.product(params[key].shape))]
-        #         c2 = [1 + (0.01 * (-1)**np.random.randint(2)) for _ in range(np.product(params[key].shape))]
-        #         c1 = T.tensor(c1, dtype=T.float).reshape(params[key].shape).to(self.device)
-        #         c2 = T.tensor(c2, dtype=T.float).reshape(params[key].shape).to(self.device)
-        #         params[key] = c1 * p1[key]
-        #         params2[key] = c2 * p2[key]
 
         return params, params2
     
