@@ -124,13 +124,11 @@ class Game:
             i2 = str(n)[1]
             self.window.blit(IMG_numbers[int(i1)], (200-33, 50))
             self.window.blit(IMG_numbers[int(i2)], (200+3, 50))
-        elif n < 1000:
-            i1 = str(n)[0]
-            i2 = str(n)[1]
-            i3 = str(n)[2]
-            self.window.blit(IMG_numbers[int(i1)], (200-60, 50))
-            self.window.blit(IMG_numbers[int(i2)], (200-20, 50))
-            self.window.blit(IMG_numbers[int(i3)], (200+20, 50))
+        else:
+            s = str(n)
+            for i in range(len(s)):
+                num = int(s[i])
+                self.window.blit(IMG_numbers[num], (200-60+i*40, 50))
 
     def update(self, score, die, game_active):
         self.window.blit(IMG_backgroung, (0,0))
