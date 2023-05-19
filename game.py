@@ -148,10 +148,6 @@ class Game:
         self.birds.draw(self.window)
         self.floor.draw(self.window)
 
-        for bird in self.birds:
-            pygame.draw.line(self.window,(0,0,0), bird.rect.center, (self.actual_pipe_top.rect.centerx, self.actual_pipe_top.rect.bottom))
-            pygame.draw.line(self.window,(0,0,0), bird.rect.center, (self.actual_pipe_bottom.rect.centerx, self.actual_pipe_bottom.rect.top))
-        
         if die: 
             self.window.blit(IMG_game_over, (50,270))
         if game_active: 
