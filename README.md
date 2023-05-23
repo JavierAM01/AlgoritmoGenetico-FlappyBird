@@ -63,7 +63,7 @@ Por ejemplo uno de los posibles cambios es el siguiente:
                 params[key][a,b,c]  *= (1 + (0.01 * (-1)**random.randint(0,1)))
 ```
 
-en el cual tratamos de mover un cierto rango los valores actuales, con el fin de hacercanos a máximos locales. Sería como un uso de la idea del descenso del gradiente, pero en este caso nos movemos en drecciones aleatorias.
+en el cual tratamos de mover un cierto rango los valores actuales, con el fin de acercanos a máximos locales. Sería como un uso de la idea del descenso del gradiente, pero en este caso nos movemos en direcciones aleatorias.
 
 Otra posible modificación es la mutaciones de 2 redes. En este caso cambios un conjunto de parámetros con los de otra red:
 
